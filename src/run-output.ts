@@ -1,6 +1,7 @@
-import type { Run, RunResult } from "@cursor/sdk";
+import { Agent, type Run, type RunResult } from "@cursor/sdk";
 import { CcaError } from "./errors.js";
 import { isJson, printJson, printJsonLine } from "./output.js";
+import { requireApiKey } from "./sdk.js";
 
 export interface RunContext {
   agentId: string;
@@ -46,6 +47,29 @@ async function streamRun(run: Run): Promise<void> {
   process.exitCode = exitCodeForStatus(run.status === "running" ? "error" : run.status);
 }
 
+async function resolveWaitResult(result: RunResult, context: RunContext): Promise<RunResult> {
+  if (result.status !== "finished" || result.result !== undefined) return result;
+  try {
+    const detail = await Agent.getRun(result.id, {
+      runtime: "cloud",
+      agentId: context.agentId,
+      apiKey: requireApiKey(),
+    });
+    return {
+      id: detail.id,
+      status: detail.status === "running" ? result.status : detail.status,
+      result: detail.result ?? result.result,
+      error: detail.error ?? result.error,
+      model: detail.model ?? result.model,
+      durationMs: detail.durationMs ?? result.durationMs,
+      git: detail.git ?? result.git,
+      usage: detail.usage ?? result.usage,
+    };
+  } catch {
+    return result;
+  }
+}
+
 function printWaitResult(result: RunResult, context: RunContext): void {
   if (isJson()) {
     printJson({
@@ -83,7 +107,7 @@ export async function handleRun(run: Run, mode: RunMode, context: RunContext): P
   }
 
   if (wait) {
-    const result = await run.wait();
+    const result = await resolveWaitResult(await run.wait(), context);
     printWaitResult(result, context);
     return;
   }

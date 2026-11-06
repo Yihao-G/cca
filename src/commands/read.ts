@@ -15,7 +15,7 @@ Read a Cloud Agent session: metadata and the final message of each run.
 
 Options:
   --last       Print only the final message of the latest run
-  --limit <n>  Max runs to fetch (default: 100, all pages)
+  --limit <n>  Max runs to fetch (default: 20, max: 100)
   --json       Machine-readable output
   -h, --help   Show this help
 `;
@@ -70,9 +70,9 @@ export async function readCommand(args: string[]): Promise<void> {
   const agentId = positionals[0];
   if (!agentId) throw new CcaError("Missing required argument <agentId>.");
 
-  const limit = values.limit === undefined ? 100 : Number.parseInt(String(values.limit), 10);
-  if (!Number.isInteger(limit) || limit <= 0) {
-    throw new CcaError("--limit must be a positive integer.");
+  const limit = values.limit === undefined ? 20 : Number.parseInt(String(values.limit), 10);
+  if (!Number.isInteger(limit) || limit <= 0 || limit > 100) {
+    throw new CcaError("--limit must be an integer between 1 and 100.");
   }
 
   const apiKey = requireApiKey();
@@ -82,7 +82,8 @@ export async function readCommand(args: string[]): Promise<void> {
   if (values.last) {
     const latest = runs[0];
     if (!latest) throw new CcaError(`Agent ${agentId} has no runs yet.`);
-    const summary = summarizeRun(latest);
+    const detail = await Agent.getRun(latest.id, { runtime: "cloud", agentId, apiKey });
+    const summary = summarizeRun(detail);
 
     if (isJson()) {
       printJson({ agentId, ...summary });
@@ -96,7 +97,11 @@ export async function readCommand(args: string[]): Promise<void> {
     return;
   }
 
-  const summaries = runs.map(summarizeRun);
+  const summaries: RunSummary[] = [];
+  for (const run of runs) {
+    const detail = await Agent.getRun(run.id, { runtime: "cloud", agentId, apiKey });
+    summaries.push(summarizeRun(detail));
+  }
 
   if (isJson()) {
     printJson({

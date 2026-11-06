@@ -16,9 +16,10 @@ allowed-tools: Bash(cca:*)
 ## Commands
 
 ```
-cca run    [--env <name>] [--prompt <t> | --prompt-file <f> | stdin] [model options] [--stream | --wait] [--json]
+cca run    [--env <name>] [--name <label>] [--prompt <t> | --prompt-file <f> | stdin] [model options] [--stream | --wait] [--json]
 cca send   <agentId> [--prompt ...] [model options] [--stream | --wait] [--json]
-cca read   <agentId> [--last] [--limit <n>] [--json]
+cca cancel <agentId> [--json]
+cca read   <agentId> [--last] [--wait] [--limit <n>] [--json]
 cca list   [--all] [--limit <n>] [--cursor <c>] [--json]
 cca artifacts <agentId> [--download <dir>] [--json]
 cca models [--json]
@@ -41,6 +42,14 @@ Creates a new agent and sends the first prompt.
 ## send
 
 Sends a follow-up prompt to an existing agent. Same prompt, model, streaming, and waiting options as `run`. Only one run can be active per agent; a second send while running fails.
+
+## cancel
+
+Cancels the active run of an agent. Resolves the latest run; fails when no run is active.
+
+```
+cca cancel <agentId> --json
+```
 
 ## read
 

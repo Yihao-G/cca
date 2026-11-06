@@ -112,9 +112,9 @@ export async function handleRun(run: Run, mode: RunMode, context: RunContext): P
     return;
   }
 
-  if (isJson()) {
-    printJson({ agentId: context.agentId, runId: run.id, url: context.url });
-  } else {
-    process.stdout.write(`agent: ${context.agentId}\nrun:   ${run.id}\nurl:   ${context.url}\n`);
-  }
+  const payload = isJson()
+    ? `${JSON.stringify({ agentId: context.agentId, runId: run.id, url: context.url }, null, 2)}\n`
+    : `agent: ${context.agentId}\nrun:   ${run.id}\nurl:   ${context.url}\n`;
+  await new Promise<void>((resolve) => process.stdout.write(payload, () => resolve()));
+  process.exit(0);
 }

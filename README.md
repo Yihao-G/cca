@@ -23,6 +23,7 @@ export CURSOR_API_KEY="your-user-api-key"   # https://cursor.com/dashboard/api
 ```
 cca run    [--env <name>] [--name <label>] [--prompt <t> | --prompt-file <f> | stdin] [model options] [--stream | --wait] [--json]
 cca send   <agentId> [--prompt ...] [model options] [--stream | --wait] [--json]
+cca cancel <agentId> [--json]
 cca read   <agentId> [--last] [--wait] [--limit <n>] [--json]
 cca list   [--all] [--limit <n>] [--cursor <c>] [--json]
 cca artifacts <agentId> [--download <dir>] [--json]
@@ -40,6 +41,7 @@ Execution modes:
 - `--stream`: live run events. Text mode renders assistant text, tool calls, terminal status. `--json` emits one JSON object per line.
 - `--wait`: blocks until the run reaches a terminal state, then prints the final assistant message.
 - `cca read <agentId> --wait`: attach to the active run and print its final message; use this to recover after an interrupted session. `--name` on `cca run` makes the agent findable in `cca list`.
+- `cca cancel <agentId>`: cancel the active run. Fails when no run is active.
 
 Exit codes: `0` when the run finished (including an AI-reported failure), `1` on CLI/network/Cursor errors or a run that ended in `error`/`cancelled`.
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { artifactsCommand, artifactsHelp } from "./commands/artifacts.js";
+import { cancelCommand, cancelHelp } from "./commands/cancel.js";
 import { configCommand, configHelp } from "./commands/config.js";
 import { listCommand, listHelp } from "./commands/list.js";
 import { modelsCommand, modelsHelp } from "./commands/models.js";
@@ -21,6 +22,7 @@ Usage: cca <command> [options]
 Commands:
   run        Create a Cloud Agent and send a prompt
   send       Send a follow-up prompt to an existing agent
+  cancel     Cancel the active run of an agent
   read       Read a session (metadata + final message per run)
   list       List agents
   artifacts  List or download agent artifacts
@@ -47,6 +49,8 @@ function commandHelp(command: string | undefined): string | undefined {
       return runHelp;
     case "send":
       return sendHelp;
+    case "cancel":
+      return cancelHelp;
     case "read":
       return readHelp;
     case "list":
@@ -84,6 +88,9 @@ async function main(): Promise<void> {
       return;
     case "send":
       await sendCommand(rest);
+      return;
+    case "cancel":
+      await cancelCommand(rest);
       return;
     case "read":
       await readCommand(rest);

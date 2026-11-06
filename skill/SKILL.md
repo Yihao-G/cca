@@ -32,6 +32,7 @@ Always pass `--json` when output will be parsed.
 Creates a new agent and sends the first prompt.
 
 - `--env <name>`: saved Cloud environment, matched by exact name. Required unless a config default exists.
+- `--name <label>`: name the agent. It shows in `cca list`, which makes interrupted runs findable.
 - Prompt sources: `--prompt`, `--prompt-file <path>`, or stdin. Use a file or stdin for long prompts.
 - Default mode is hand-off: prints `agentId`, `runId`, `url` and exits. The run continues server-side.
 - `--wait`: block until the run ends, then print the final assistant message.
@@ -46,6 +47,7 @@ Sends a follow-up prompt to an existing agent. Same prompt, model, streaming, an
 Reads an agent session: metadata plus the final assistant message of each run.
 
 - `--last`: just the latest run's final message.
+- `--wait`: attach to the active run, block until it ends, then print its final message. Use this to reattach after a hand-off or an interrupted session.
 - `--limit <n>`: max runs to fetch (default 20, max 100).
 - Full read returns every run's status, timing, model, and result.
 

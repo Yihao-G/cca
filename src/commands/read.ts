@@ -6,6 +6,7 @@ import { agentUrl, requireApiKey } from "../sdk.js";
 const options = {
   ...commonOptions,
   last: { type: "boolean" as const },
+  wait: { type: "boolean" as const },
   limit: { type: "string" as const },
 };
 
@@ -15,6 +16,7 @@ Read a Cloud Agent session: metadata and the final message of each run.
 
 Options:
   --last       Print only the final message of the latest run
+  --wait       Wait for the active run to finish, then print its final message
   --limit <n>  Max runs to fetch (default: 20, max: 100)
   --json       Machine-readable output
   -h, --help   Show this help
@@ -61,6 +63,18 @@ async function listAllRuns(agentId: string, apiKey: string, limit: number): Prom
   return items;
 }
 
+function printLatest(agentId: string, summary: RunSummary): void {
+  if (isJson()) {
+    printJson({ agentId, ...summary });
+  } else if (summary.result) {
+    process.stdout.write(`${summary.result}\n`);
+  } else if (summary.error) {
+    process.stdout.write(`${summary.error.message}\n`);
+  } else {
+    process.stdout.write(`(run ${summary.runId} has no final message yet)\n`);
+  }
+}
+
 export async function readCommand(args: string[]): Promise<void> {
   const { values, positionals } = parseCliArgs(args, options);
   if (values.help) {
@@ -81,21 +95,27 @@ export async function readCommand(args: string[]): Promise<void> {
   const info = await Agent.get(agentId, { apiKey });
   const runs = await listAllRuns(agentId, apiKey, limit);
 
+  if (values.wait) {
+    const latest = runs[0];
+    if (!latest) throw new CcaError(`Agent ${agentId} has no runs yet.`);
+    let detail = await Agent.getRun(latest.id, { runtime: "cloud", agentId, apiKey });
+    if (detail.status === "running") {
+      try {
+        await detail.wait();
+      } catch {
+        // fall through to refetch below
+      }
+      detail = await Agent.getRun(latest.id, { runtime: "cloud", agentId, apiKey });
+    }
+    printLatest(agentId, summarizeRun(detail));
+    return;
+  }
+
   if (values.last) {
     const latest = runs[0];
     if (!latest) throw new CcaError(`Agent ${agentId} has no runs yet.`);
     const detail = await Agent.getRun(latest.id, { runtime: "cloud", agentId, apiKey });
-    const summary = summarizeRun(detail);
-
-    if (isJson()) {
-      printJson({ agentId, ...summary });
-    } else if (summary.result) {
-      process.stdout.write(`${summary.result}\n`);
-    } else if (summary.error) {
-      process.stdout.write(`${summary.error.message}\n`);
-    } else {
-      process.stdout.write(`(run ${summary.runId} has no final message yet)\n`);
-    }
+    printLatest(agentId, summarizeRun(detail));
     return;
   }
 

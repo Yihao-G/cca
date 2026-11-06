@@ -10,6 +10,7 @@ import { agentUrl, requireApiKey } from "../sdk.js";
 const options = {
   ...commonOptions,
   env: { type: "string" as const },
+  name: { type: "string" as const },
   prompt: { type: "string" as const },
   "prompt-file": { type: "string" as const },
   model: { type: "string" as const },
@@ -26,6 +27,7 @@ Create a Cloud Agent and send it a prompt.
 
 Options:
   --env <name>         Saved Cloud Agent environment name (default: config env)
+  --name <label>       Agent name, shown in cca list (helps find runs later)
   --prompt <text>      Prompt text
   --prompt-file <path> Read prompt from a file
   --model <id>         Model id (default: config model)
@@ -67,8 +69,14 @@ export async function runCommand(args: string[]): Promise<void> {
   const model = resolveModel(values, config);
   const apiKey = requireApiKey();
 
+  const name =
+    typeof values.name === "string" && values.name.trim().length > 0
+      ? values.name.trim()
+      : undefined;
+
   const agent = await Agent.create({
     apiKey,
+    ...(name ? { name } : {}),
     ...(model ? { model } : {}),
     cloud: { env: { type: "cloud", name: env } },
   });

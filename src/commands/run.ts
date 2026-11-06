@@ -1,5 +1,7 @@
 import { Agent } from "@cursor/sdk";
+import { loadConfig } from "../config.js";
 import { CcaError } from "../errors.js";
+import { resolveModel } from "../model.js";
 import { commonOptions, parseCliArgs, setJson } from "../output.js";
 import { resolvePrompt } from "../prompt.js";
 import { handleRun } from "../run-output.js";
@@ -11,19 +13,25 @@ const options = {
   prompt: { type: "string" as const },
   "prompt-file": { type: "string" as const },
   model: { type: "string" as const },
+  effort: { type: "string" as const },
+  context: { type: "string" as const },
+  param: { type: "string" as const, multiple: true },
   stream: { type: "boolean" as const },
   wait: { type: "boolean" as const },
 };
 
-export const runHelp = `Usage: cca run --env <name> [options]
+export const runHelp = `Usage: cca run [--env <name>] [options]
 
-Create a Cloud Agent in the named environment and send it a prompt.
+Create a Cloud Agent and send it a prompt.
 
 Options:
-  --env <name>         Saved Cloud Agent environment name (required)
+  --env <name>         Saved Cloud Agent environment name (default: config env)
   --prompt <text>      Prompt text
   --prompt-file <path> Read prompt from a file
-  --model <id>         Model id (default: account default)
+  --model <id>         Model id (default: config model)
+  --effort <level>     Model effort param (e.g. high)
+  --context <size>     Model context window param (e.g. 1m)
+  --param <id>=<value> Any other model param (repeatable)
   --stream             Stream run events instead of handing off
   --wait               Wait for the run to finish and print the final message
   --json               Machine-readable output
@@ -40,9 +48,15 @@ export async function runCommand(args: string[]): Promise<void> {
   }
   setJson(Boolean(values.json));
 
-  const env = values.env;
-  if (typeof env !== "string" || env.trim().length === 0) {
-    throw new CcaError("Missing required option --env <name>.");
+  const config = loadConfig();
+
+  const flagEnv =
+    typeof values.env === "string" && values.env.trim().length > 0 ? values.env.trim() : undefined;
+  const env = flagEnv ?? config.env;
+  if (!env) {
+    throw new CcaError(
+      "No environment. Pass --env <name> or run `cca config set env <name>`.",
+    );
   }
 
   if (values.stream && values.wait) {
@@ -50,8 +64,8 @@ export async function runCommand(args: string[]): Promise<void> {
   }
 
   const prompt = await resolvePrompt(values);
+  const model = resolveModel(values, config);
   const apiKey = requireApiKey();
-  const model = typeof values.model === "string" ? { id: values.model } : undefined;
 
   const agent = await Agent.create({
     apiKey,

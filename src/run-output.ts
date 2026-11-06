@@ -55,6 +55,7 @@ function printWaitResult(result: RunResult, context: RunContext): void {
       status: result.status,
       result: result.result ?? null,
       error: result.error ?? null,
+      model: result.model ?? null,
       durationMs: result.durationMs ?? null,
       git: result.git ?? null,
     });

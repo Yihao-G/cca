@@ -25,6 +25,7 @@ interface RunSummary {
   status: Run["status"];
   createdAt: number | null;
   durationMs: number | null;
+  model: Run["model"] | null;
   result: string | null;
   error: { message: string; code?: string } | null;
 }
@@ -35,6 +36,7 @@ function summarizeRun(run: Run): RunSummary {
     status: run.status,
     createdAt: run.createdAt ?? null,
     durationMs: run.durationMs ?? null,
+    model: run.model ?? null,
     result: run.result ?? null,
     error: run.error ? { message: run.error.message, ...(run.error.code ? { code: run.error.code } : {}) } : null,
   };

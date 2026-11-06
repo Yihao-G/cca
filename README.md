@@ -21,14 +21,18 @@ export CURSOR_API_KEY="your-user-api-key"   # https://cursor.com/dashboard/api
 ## Commands
 
 ```
-cca run    --env <name> [--prompt <t> | --prompt-file <f> | stdin] [--model <id>] [--stream | --wait] [--json]
-cca send   <agentId> [--prompt ...] [--stream | --wait] [--json]
+cca run    [--env <name>] [--prompt <t> | --prompt-file <f> | stdin] [model options] [--stream | --wait] [--json]
+cca send   <agentId> [--prompt ...] [model options] [--stream | --wait] [--json]
 cca read   <agentId> [--last] [--limit <n>] [--json]
 cca list   [--all] [--limit <n>] [--cursor <c>] [--json]
 cca artifacts <agentId> [--download <dir>] [--json]
+cca models [--json]
+cca config set|get|unset|list [--json]
 ```
 
-`run` requires a saved Cloud Agent environment name (exact match). The environment owns the repository set; branch and PR instructions belong in the prompt.
+Model options: `--model <id>`, `--effort <level>` (e.g. `high`), `--context <size>` (e.g. `1m`), `--param <id>=<value>` (repeatable).
+
+The environment owns the repository set; branch and PR instructions belong in the prompt.
 
 Execution modes:
 
@@ -38,10 +42,30 @@ Execution modes:
 
 Exit codes: `0` when the run finished (including an AI-reported failure), `1` on CLI/network/Cursor errors or a run that ended in `error`/`cancelled`.
 
+## Config
+
+Persistent defaults live in `~/.config/cca/config.json` (honors `XDG_CONFIG_HOME`). CLI flags override config values; model params merge per key.
+
+```bash
+cca config set env fullstack
+cca config set model composer-2
+cca config set effort high
+cca config set context 1m
+cca config set param.fast false
+cca config list
+cca config get env
+cca config unset effort
+```
+
+Keys: `env`, `model`, `effort`, `context`, `param.<id>`.
+
+With a config env set, `cca run --prompt-file qa.md --json` needs no `--env`.
+
 ## Examples
 
 ```bash
-cca run --env "QA" --prompt-file qa.md --json
+cca models --json
+cca run --prompt-file qa.md --json
 cca run --env "QA" --wait --json < qa.md
 cca read bc-123 --last --json
 cca send bc-123 --prompt "Also check the login flow" --json

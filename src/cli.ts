@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { artifactsCommand, artifactsHelp } from "./commands/artifacts.js";
+import { configCommand, configHelp } from "./commands/config.js";
 import { listCommand, listHelp } from "./commands/list.js";
+import { modelsCommand, modelsHelp } from "./commands/models.js";
 import { readCommand, readHelp } from "./commands/read.js";
 import { runCommand, runHelp } from "./commands/run.js";
 import { sendCommand, sendHelp } from "./commands/send.js";
@@ -17,11 +19,13 @@ const help = `cca ${VERSION} — Cursor Cloud Agent CLI
 Usage: cca <command> [options]
 
 Commands:
-  run        Create a Cloud Agent in a named environment and send a prompt
+  run        Create a Cloud Agent and send a prompt
   send       Send a follow-up prompt to an existing agent
   read       Read a session (metadata + final message per run)
   list       List agents
   artifacts  List or download agent artifacts
+  config     Set persistent defaults (env, model, params)
+  models     List available models and their params
 
 Global:
   --json     Machine-readable output (available on every command)
@@ -34,6 +38,7 @@ Requires CURSOR_API_KEY. Examples:
   cca run --env "QA" --wait --json < task.txt
   cca read bc-123 --last --json
   cca send bc-123 --prompt "Also check the login flow" --json
+  cca config set env QA
 `;
 
 function commandHelp(command: string | undefined): string | undefined {
@@ -48,6 +53,10 @@ function commandHelp(command: string | undefined): string | undefined {
       return listHelp;
     case "artifacts":
       return artifactsHelp;
+    case "config":
+      return configHelp;
+    case "models":
+      return modelsHelp;
     default:
       return undefined;
   }
@@ -84,6 +93,12 @@ async function main(): Promise<void> {
       return;
     case "artifacts":
       await artifactsCommand(rest);
+      return;
+    case "config":
+      await configCommand(rest);
+      return;
+    case "models":
+      await modelsCommand(rest);
       return;
     default: {
       const perCommand = commandHelp(command);

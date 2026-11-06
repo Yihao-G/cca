@@ -1,0 +1,27 @@
+{
+  "name": "cca",
+  "version": "0.1.0",
+  "description": "CLI for Cursor Cloud Agents",
+  "type": "module",
+  "bin": {
+    "cca": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@cursor/sdk": "^1.0.27"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
